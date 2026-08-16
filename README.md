@@ -25,9 +25,22 @@ The Scenario Outline is used to exercise the same successful contract for London
 
 Controlled weather data is used by the ranking scenario so the ranking behaviour can eventually be tested deterministically rather than depending on changing live weather.
 
-## Assumed API contract
+## API contract assumptions
 
-The ticket does not provide endpoint paths or a JSON schema, so the suite makes the following contract decisions.
+The ticket does not define endpoint paths, response schemas, suitability score
+format, or error status codes. The test suite therefore assumes:
+
+- `GET /api/activities` returns activity recommendations.
+- `GET /api/locations` supports partial location matching.
+- A successful request returns HTTP 200.
+- Missing location input returns HTTP 400.
+- An unresolved location returns HTTP 404.
+- A resolved location with no weather data returns HTTP 404.
+- Open-Meteo unavailable results in HTTP 503.
+- Incomplete Open-Meteo data results in HTTP 502.
+- `suitabilityScore` is represented as a number.
+- Activity recommendations are ordered from highest to lowest suitability.
+
 
 ### Activity recommendations
 
@@ -103,29 +116,59 @@ The suite assumes:
 - missing city/town input returns HTTP 400
 - an unresolved location returns HTTP 404
 - a successfully resolved location with no available weather data returns HTTP 404
+- Open-Meteo unavailable returns HTTP 503
+- incomplete Open-Meteo forecast data returns HTTP 502 with error code INCOMPLETE_WEATHER_DATA
 
-The feature validates the error message semantically rather than requiring one exact message string.
+Error messages are validated semantically where the exact message is not part
+of the assumed contract. The incomplete forecast scenario validates the
+specific error code and message defined by the test contract.
 
-## Open-Meteo dependency
+## Testability and Open-Meteo dependency
 
-Open-Meteo is an external third-party dependency.
+Open-Meteo is an external third-party dependency. The test suite should not
+depend on changing live weather conditions or on the real Open-Meteo service
+becoming unavailable in order to exercise failure scenarios.
 
-The Background checks that Open-Meteo is reachable for the normal feature flow. The check uses a small forecast request for known coordinates.
+Since there is currently no System Under Test (SUT), the exact mechanism used
+by the application to integrate with and mock Open-Meteo is not yet known.
 
-For ranking tests, live weather alone is not sufficient because weather changes over time. The future application should expose a replaceable weather-client boundary or equivalent test seam so controlled Open-Meteo responses can be supplied.
-
-The current automation represents the expected test seam through test-only request headers:
+For the purpose of this specification-first test framework, the following
+test-only request headers are assumed as a test seam:
 
 - `x-test-weather-mode: live`
 - `x-test-weather-mode: controlled`
 - `x-test-weather-mode: no-data`
+- `x-test-weather-mode: unavailable`
+- `x-test-weather-mode: incomplete`
+
+The weather mode allows the tests to describe the Open-Meteo behaviour required
+by a scenario.
+
+`live` represents the normal Open-Meteo integration.
+
+`controlled` represents deterministic 7-day weather data used to validate
+activity ranking without depending on changing live weather.
+
+`no-data` represents a successful Open-Meteo interaction where weather data
+is not available for the resolved location.
+
+`unavailable` represents an Open-Meteo service failure.
+
+`incomplete` represents a successful provider response that does not contain
+the complete weather data required to produce the 7-day recommendations.
+
+The following location-resolution modes are also assumed:
 - `x-test-location-resolution: normal`
 - `x-test-location-resolution: not-found`
 - `x-test-location-resolution: resolved`
 
-These headers are a specification/testing assumption only. Since the SUT does not exist, the implementation may use a different mechanism such as dependency injection or a stub server. If that happens, only the support/client layer should need to change; the feature scenarios should remain the same.
+These headers are not part of the business API requirements in the supplied
+ticket. They are testability assumptions made for this automation framework.
 
-A separate dependency-failure feature can use mocked/stubbed Open-Meteo responses for conditions such as the third-party service being unavailable or returning incomplete data.
+Once the SUT is implemented, these test seams may be replaced by dependency
+injection, HTTP stubbing, a mock server, or another mechanism supported by the
+application architecture. The feature scenarios should remain unchanged if
+the underlying mocking implementation changes.
 
 ## Project structure
 
@@ -199,4 +242,4 @@ The ticket does not define the actual formula used to calculate suitability for 
 
 It does not invent weather thresholds or expected numeric scores.
 
-Performance, authentication and rate limiting are not covered because they are not part of the assigment.
+Performance, authentication and rate limiting are not covered because they are not part of the assignment.
