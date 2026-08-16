@@ -20,15 +20,15 @@ The feature is written from the API consumer's point of view and covers:
 - missing location input
 - a location that cannot be resolved
 - a resolved location for which Open-Meteo returns no weather data
+- scenarios where Open-Meteo API will be down
 
-The Scenario Outline is used to exercise the same successful contract for London, Manchester and Edinburgh without duplicating scenarios.
+The Scenario Outline is used to exercise the same successful contract for London, Manchester and Edinburgh (any location can be considered) without duplicating scenarios.
 
 Controlled weather data is used by the ranking scenario so the ranking behaviour can eventually be tested deterministically rather than depending on changing live weather.
 
 ## API contract assumptions
 
-The ticket does not define endpoint paths, response schemas, suitability score
-format, or error status codes. The test suite therefore assumes:
+The ticket does not define endpoint paths, response schemas, suitability score format, or error status codes. The test suite therefore assumes:
 
 - `GET /api/activities` returns activity recommendations.
 - `GET /api/locations` supports partial location matching.
@@ -119,21 +119,15 @@ The suite assumes:
 - Open-Meteo unavailable returns HTTP 503
 - incomplete Open-Meteo forecast data returns HTTP 502 with error code INCOMPLETE_WEATHER_DATA
 
-Error messages are validated semantically where the exact message is not part
-of the assumed contract. The incomplete forecast scenario validates the
-specific error code and message defined by the test contract.
+Error messages are validated semantically where the exact message is not part of the assumed contract. The incomplete forecast scenario validates the specific error code and message defined by the test contract.
 
 ## Testability and Open-Meteo dependency
 
-Open-Meteo is an external third-party dependency. The test suite should not
-depend on changing live weather conditions or on the real Open-Meteo service
-becoming unavailable in order to exercise failure scenarios.
+Open-Meteo is an external third-party dependency. The test suite should not depend on changing live weather conditions or on the real Open-Meteo service becoming unavailable in order to exercise failure scenarios.
 
-Since there is currently no System Under Test (SUT), the exact mechanism used
-by the application to integrate with and mock Open-Meteo is not yet known.
+Since there is currently no System Under Test (SUT), the exact mechanism used by the application to integrate with and mock Open-Meteo is not yet known.
 
-For the purpose of this specification-first test framework, the following
-test-only request headers are assumed as a test seam:
+For the purpose of this specification-first test framework, the following test-only request headers are assumed as a test seam:
 
 - `x-test-weather-mode: live`
 - `x-test-weather-mode: controlled`
@@ -141,8 +135,7 @@ test-only request headers are assumed as a test seam:
 - `x-test-weather-mode: unavailable`
 - `x-test-weather-mode: incomplete`
 
-The weather mode allows the tests to describe the Open-Meteo behaviour required
-by a scenario.
+The weather mode allows the tests to describe the Open-Meteo behaviour required by a scenario.
 
 `live` represents the normal Open-Meteo integration.
 
@@ -162,13 +155,9 @@ The following location-resolution modes are also assumed:
 - `x-test-location-resolution: not-found`
 - `x-test-location-resolution: resolved`
 
-These headers are not part of the business API requirements in the supplied
-ticket. They are testability assumptions made for this automation framework.
+These headers are not part of the business API requirements in the supplied ticket. They are testability assumptions made for this automation framework.
 
-Once the SUT is implemented, these test seams may be replaced by dependency
-injection, HTTP stubbing, a mock server, or another mechanism supported by the
-application architecture. The feature scenarios should remain unchanged if
-the underlying mocking implementation changes.
+Once the SUT is implemented, these test seams may be replaced by dependency injection, HTTP stubbing, a mock server, or another mechanism supported by the application architecture. The feature scenarios should remain unchanged if the underlying mocking implementation changes.
 
 ## Project structure
 
