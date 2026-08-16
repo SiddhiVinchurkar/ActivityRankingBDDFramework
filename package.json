@@ -1,0 +1,19 @@
+{
+  "name": "activity-ranking-api-bdd",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Specification-first BDD tests for the Activity Ranking API",
+  "scripts": {
+    "test": "cucumber-js"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.3.0",
+    "@types/node": "^22.10.0",
+    "playwright": "^1.51.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
